@@ -16,6 +16,7 @@ void login();
 void transcript();
 void course_detail();
 void withdraw1();
+void personal_details();
 
 string student_id;
 string student_password;
@@ -40,11 +41,14 @@ int main (int argc, const char * argv[]) {
         cout << "1 : student menu.\n";
         cout << "2 : student transcript.\n";
         cout << "3 : withdraw.\n";
+        cout << "4 : personal details.\n";
         cin >> ope_num;
         if (ope_num == "2") {
             transcript();
         } else if (ope_num == "3") {
             withdraw1();
+        } else if (ope_num == "4") {
+            personal_details();
         }
     }
 }
@@ -245,6 +249,42 @@ void withdraw1()
         else if (option == "2") {
             return;
         }
+    }
+}
+
+void personal_details() {
+    string operation;
+    string statement;
+    MYSQL_RES *res_set;
+    
+    cout << "Please enter the id of the student you want to modify:\n";
+    cin >> student_id;
+    
+    cout << "Please enter the information type you want to modify: (password/address)\n";
+    cin >> operation;
+    
+    if (operation == "password") {
+        string new_password;
+        cout << "Please enter the new password:\n";
+        cin >> new_password;
+        statement = "update student set Password = '" +new_password +"' where Id = '" + student_id + "';";
+        if (mysql_query(conn,statement.c_str()) == 0) {
+            cout << "modification success !!!!!!!!!\n";
+        } else {
+            cout << "Some error occurs !!!!!!!!!\n";
+        }
+    } else if (operation == "address") {
+        string new_address;
+        cout << "Please enter the new address:\n";
+        cin >> new_address;
+        statement = "update student set Address = '" + new_address +"' where Id = '" + student_id + "';";
+        if (mysql_query(conn,statement.c_str()) == 0) {
+            cout << "modification success !!!!!!!!!\n";
+        } else {
+            cout << "Some error occurs !!!!!!!!!\n";
+        }
+    } else {
+        cout << "invalid information type.";
     }
 }
 
