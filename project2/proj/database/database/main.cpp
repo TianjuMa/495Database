@@ -15,6 +15,7 @@ using namespace std;
 void login();
 void transcript();
 void course_detail();
+void withdraw1();
 
 string student_id;
 string student_password;
@@ -38,9 +39,12 @@ int main (int argc, const char * argv[]) {
         cout << "please enter the operation number you want to take now:\n";
         cout << "1 : student menu.\n";
         cout << "2 : student transcript.\n";
+        cout << "3 : withdraw.\n";
         cin >> ope_num;
         if (ope_num == "2") {
             transcript();
+        } else if (ope_num == "3") {
+            withdraw1();
         }
     }
 }
@@ -134,25 +138,113 @@ void course_detail() {
     
     if (numrows == 0) {
         cout << "Invalid Course Number !!!!!!!!!!!!!!!!!!!\n";
-    }
-    for (int i = 0; i < numrows; i++) {
-        row1 = mysql_fetch_row( res_set1 );
-        if( row1 != NULL ) {
-            cout << "UoSCode : " << row1[0] << endl;
-            cout << "UoSName: " << row1[1] << endl;
-            cout << "Year : " << row1[2] << endl;
-            cout << "Semester : " << row1[3] << endl;
-            cout << "Enrollment : " << row1[4] << endl;
-            cout << "MaxEnrollment : " << row1[5] << endl;
-            cout << "Name : " << row1[6] << endl;
-            if (row1[7] == NULL) {
-                cout << "Grade: " << "NULL" << endl;
-            } else {
-                cout << "Grade: " << row1[7] << endl;
+    } else {
+        for (int i = 0; i < numrows; i++) {
+            row1 = mysql_fetch_row( res_set1 );
+            if( row1 != NULL ) {
+                cout << "UoSCode : " << row1[0] << endl;
+                cout << "UoSName: " << row1[1] << endl;
+                cout << "Year : " << row1[2] << endl;
+                cout << "Semester : " << row1[3] << endl;
+                cout << "Enrollment : " << row1[4] << endl;
+                cout << "MaxEnrollment : " << row1[5] << endl;
+                cout << "Name : " << row1[6] << endl;
+                if (row1[7] == NULL) {
+                    cout << "Grade: " << "NULL" << endl;
+                } else {
+                    cout << "Grade: " << row1[7] << endl;
+                }
+                cout << "\n";
             }
-            cout << "\n";
         }
     }
     // free resources
     mysql_free_result( res_set1 );
 }
+
+void withdraw1()
+{
+    string withdraw_course;
+    string option;
+    string statement;
+
+    cout << "These are the courses that you can withdraw from:\n";
+    cout << "\n";
+
+    MYSQL_RES *res_set;
+    MYSQL_ROW row;
+
+    statement = "SELECT transcript.UoSCode, UoSName, Semester, Year FROM transcript join unitofstudy WHERE transcript.UoSCode = unitofstudy.UoSCode AND StudId = '"+student_id+"' AND transcript.Grade is NULL;";
+
+    mysql_query(conn, statement.c_str());
+    res_set = mysql_store_result(conn);
+    int numrows = (int)mysql_num_rows(res_set);
+
+    if ( numrows == 0 ) {
+        cout << "There are no course you can withdraw.\n";
+        return;
+    } else {
+        for (int i = 0; i < numrows; i++) {
+            row = mysql_fetch_row( res_set );
+            if( row != NULL ) {
+                cout << "Course Code: " << row[0] << endl;
+                cout << "Course Name: " << row[1] << endl;
+                cout << "Semester : " << row[2] << endl;
+                cout << "Year: " << row[3] << endl;
+                cout << "\n";
+            }
+        }
+    }
+    
+    while (true) {
+        cout << "Enter the course you want to withdraw from:\n";
+        cin >> withdraw_course;
+
+        MYSQL_RES *res_set;
+        MYSQL_ROW row;
+        statement = "SELECT transcript.UoSCode FROM transcript WHERE StudId = '"+student_id+"' AND transcript.Grade is NULL and UoSCode = '"+withdraw_course+"';";
+
+        mysql_query(conn, statement.c_str());
+        res_set = mysql_store_result(conn);
+        int numrows = (int)mysql_num_rows(res_set);
+        
+        
+        if (numrows == 0) {
+            cout << "Can not withdraw from this course.\n";
+            cout << "Press 1 to go back to menu. Press other to continue withdrawing.";
+            cin >> option;
+            if(option == "1") return;
+            else continue;
+        } else {
+            statement = "call withdraw_procedure('"+withdraw_course+"', '"+student_id+"');";
+            
+            if(mysql_query(conn,statement.c_str()) == 0)//to handle the stored prosedure WITHDRAW
+            {
+                do
+                {
+                    if(mysql_field_count(conn) > 0)
+                    {
+                        res_set = mysql_store_result(conn);
+                        mysql_free_result(res_set);
+                    }
+                }while(mysql_next_result(conn) == 0);
+            }
+            statement = "select @message;";
+            mysql_query(conn,statement.c_str());
+            res_set = mysql_store_result(conn);
+            row = mysql_fetch_row(res_set);
+            if(strcmp(row[0], "The enrollment is smaller than half.") == 0) {
+                cout << "Warning: The enrollment is smaller than half.\n";
+            }
+        }
+        cout << " Enter 1 to continue withdrawing. Enter 2 Go back to main menu.\n";
+        cin >> option;
+        if(option == "1") {
+            continue;
+        }
+        else if (option == "2") {
+            return;
+        }
+    }
+}
+
