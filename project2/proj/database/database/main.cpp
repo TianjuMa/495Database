@@ -32,8 +32,6 @@ MYSQL *connection_result;
 int main (int argc, const char * argv[]) {
     mysql_real_connect(conn, "localhost", "root", "Ma930729", "project3-nudb", 0, NULL, CLIENT_MULTI_RESULTS);
     login();
-//    mysql_close ( conn );
-//    int b = 1;
 }
 
 void login() {
@@ -46,7 +44,15 @@ void login() {
         
         string statement ="SELECT * FROM student WHERE Id = '"+student_id+"' and Password = '"+student_password+"';";
         
-        if (mysql_query(conn, statement.c_str()) != 0) {
+        mysql_query(conn, statement.c_str());
+        string error = mysql_error(conn);
+        
+        MYSQL_RES *res_set;
+        
+        res_set = mysql_store_result(conn);
+        int numrows = (int)mysql_num_rows(res_set);
+        
+        if (numrows == 0) {
             cout << "Invalid information, please check the student id and password and try again.\n";
             cout << "\n";
         } else {
@@ -597,6 +603,10 @@ bool canenroll(string year, string quarter,string courseID,string q1,string y1,s
 bool cannotenroll(string year, string quarter,string courseID,string q1,string y1,string q2,string y2){
     MYSQL_RES *res_set;
     string statement = "CALL cannotenroll('"+student_id+"','"+year+"','"+quarter+"','"+courseID+"','"+q1+"','"+y1+"','"+q2+"','"+y2+"');" ;
+    
+    mysql_close(conn);
+    conn = mysql_init ( NULL );
+    mysql_real_connect(conn, "localhost", "root", "Ma930729", "project3-nudb", 0, NULL, CLIENT_MULTI_RESULTS);
     
     mysql_query(conn, statement.c_str());
     res_set = mysql_store_result(conn);
