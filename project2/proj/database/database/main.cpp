@@ -438,10 +438,14 @@ void Enroll() {
     MYSQL_RES *res_set;
     MYSQL_ROW row;
     string temp = "SELECT a.UoSCode,a.Semester,a.Year FROM uosoffering a where ((a.Semester = '"+quarter1+"' and a.year = '"+year1+"') or (a.Semester = '"+quarter2+"'and a.year = '"+year2+"')) and a.UoSCode not in (select c.UoScode from transcript c where c.StudId = '"+student_id+"' );";
+    
+    mysql_close(conn);
+    conn = mysql_init ( NULL );
+    mysql_real_connect(conn, "localhost", "root", "Ma930729", "project3-nudb", 0, NULL, CLIENT_MULTI_RESULTS);
+    
     mysql_query(conn, temp.c_str());
     res_set = mysql_store_result(conn);
     int numrows = (int)mysql_num_rows(res_set);
-    
     
     cout << "please enroll in the following courses:" << endl;
     for (int i = 0; i < numrows; i++)
